@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+#converts bulk into FTP-control,pasv and data assumes first two attributes are ip address
+
+for file in $@;  do
+
+sed 's/@attribute 266 {WWW,MAIL,BULK,ATTACK,P2P,DATABASE,MULTIMEDIA,SERVICES,INTERACTIVE,GAMES}/@attribute 266 {WWW,MAIL,FTP-CONTROL,FTP-DATA,FTP-PASV,ATTACK,P2P,DATABASE,MULTIMEDIA,SERVICES,INTERACTIVE,GAMES}/' $file #changes the classes in attribute 266
+
+sed -e 's/^20,\(.*\),BULK/^20,\1,FTP-DATA/' -e 's/^21,\(.*\),BULK/^21,\1,FTP-CONTROL/'  -e 's/BULK/FTP-PASV/' $file #changes bulk to corresponding classes
+
+done
+#-e 's/\(.*?\),20,\(.*)\,BULK/\1,20,\2,FTP-DATA/'
+#-e 's/\(.*?\),21,\(.*)\,BULK/\1,21,\2,FTP-CONTROL/'

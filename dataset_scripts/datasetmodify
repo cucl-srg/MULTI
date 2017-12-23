@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+for file in $@
+do
+	
+	sed -i.bak '/^$/d;/@/d' $file # remove all the junk move to temp file
+	a=($(wc $file)) # count number of instances in temp file
+	lines=${a[0]} 
+	sed -i 's/WWW/0/g;s/MAIL/1/g;s/FTP-CONTROL/2/g;s/FTP-PASV/3/g;s/ATTACK/4/g;s/P2P/5/g;s/DATABASE/6/g;s/FTP-DATA/7/g;s/MULTIMEDIA/8/g;s/SERVICES/9/g;s/INTERACTIVE/10/g;s/GAMES/11/g' $file
+
+	b=($(sed -n '2p' $file | tr  ',' ' ' | wc -w))
+	c="$((${b} - 1))" #varying number of attributes 
+
+	sed -i "1s/^/${lines},${c},WWW,MAIL,FTP-CONTROL,FTP-PASV,ATTACK,P2P,DATABASE,FTP-DATA,MULTIMEDIA,SERVICES,INTERACTIVE,GAMES\n/" $file
+done
+exit 0
+

@@ -1,0 +1,37 @@
+#!/bin/bash
+#This scripts estimates the effective bandwidth of the flow based on the entropy.
+
+
+#this is a to b.
+for i in `cat filelist`; do
+
+if [ `$i | cut -d'/' -f3` == `tcpdump -tt -vv  -nn -r $i  -F ./SiteA_src | grep -A 1 ^10 --no-group-separator |paste -s -d' \n' | awk '{print $18}' | cut -d'.' -f1,2,3,4` ]; then
+
+./tcpsetether -o - $i | tcpdump -r - -w - -F ./SiteA_src|  ./tcpdumptimebyte - | perl -w -n -e 'chomp; @list=split; if(!defined($offset)) { $offset=$list[0]; print "0.0 $list[1]\n"; }else{ printf "%f $list[1]\n",($list[0] - $offset);} '| mtk_sa -b0 -c0.00000000000000000001| tail -1;
+
+else
+
+./tcpsetether -o - $i | tcpdump -r - -w - -F ./SiteA_notsrc|  ./tcpdumptimebyte - | perl -w -n -e 'chomp; @list=split; if(!defined($offset)) { $offset=$list[0]; print "0.0 $list[1]\n"; }else{ printf "%f $list[1]\n",($list[0] - $offset);} '|./mtk_sa -b0 -c0.00000000000000000001| tail -1;
+fi;
+done 2>/dev/null |  cut -d' ' -f4 > eff.band_a-b 
+
+
+
+#this is b to a.
+(for i in `cat filelist`; do
+
+if [ `$i | cut -d'/' -f4` == `tcpdump -tt -vv  -nn -r $i  -F ./SiteA_src | grep -A 1 ^10 --no-group-separator |paste -s -d' \n' | awk '{print $22}' | cut -d'.' -f1,2,3,4` ]; then
+
+./tcpsetether -o - $i | tcpdump -r - -w - -F ./SiteA_src|  ./tcpdumptimebyte - | perl -w -n -e 'chomp; @list=split; if(!defined($offset)) { $offset=$list[0]; print "0.0 $list[1]\n"; }else{ printf "%f $list[1]\n",($list[0] - $offset);} '| ./mtk_sa -b0 -c0.00000000000000000001| tail -1;
+
+else
+
+./tcpsetether -o - $i | tcpdump -r - -w - -F ./SiteA_notsrc|  ./tcpdumptimebyte - | perl -w -n -e 'chomp; @list=split; if(!defined($offset)) { $offset=$list[0]; print "0.0 $list[1]\n"; }else{ printf "%f $list[1]\n",($list[0] - $offset);} '| ./mtk_sa -b0 -c0.00000000000000000001| tail -1;
+fi;
+done) 2>/dev/null |  cut -d' ' -f4 > eff.band_b-a 
+
+
+
+#this takes into account all the traffic of the connection.
+(for i in `cat filelist`; do ./tcpsetether -o - $i | tcpdump -r - -w - |  ./tcpdumptimebyte - | perl -w -n -e 'chomp; @list=split; if(!defined($offset)) { $offset=$list[0]; print "0.0 $list[1]\n"; }else{ printf "%f $list[1]\n",($list[0] - $offset);} '| ./mtk_sa -b0 -c0.00000000000000000001| tail -1; done) 2>/dev/null |  cut -d' ' -f4 > eff.band.all 
+

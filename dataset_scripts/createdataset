@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+#first arg is number of files to split which is ignored in first loop
+for file in "${@:2}";
+
+do
+	rm "./split"*
+	echo $@
+	sed -i.bak '/^$/d;/@/d' $file # just keep the instances
+	sed -i '/CHAT/d;/VOIP/d;' $file # remove classes
+	rev $file | cut -d ',' -f 1 | rev | sort | uniq > uniquelist
+	sed -i '/?/d' uniquelist 	
+
+	while read -r line; do 
+		grep $line $file > classlist
+		a=($(wc -w classlist))
+		echo $a
+		b=$(($a/$1))
+	
+
+		for i in $(seq 0 $(($1-1)));do
+			c=$(($b*$i))
+			if [[ $i -eq $(($1-1)) ]]    # if statement -- in the final file chuck in the remainder instances
+			then	
+				sed -n $(($c+1)),$(($c+$a%$1+$b))p classlist >> split$i
+			else	
+				sed -n $(($c+1)),$(($c+1+$b))p classlist >> split$i
+			fi 	
+ 			./datasetmodify				
+		done
+
+	done < uniquelist
+	
+done
+
+rm uniquelist classlist
+exit 0
+	
+	

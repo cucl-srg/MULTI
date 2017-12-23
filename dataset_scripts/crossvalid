@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+for i in $(seq $1 $2);do # loop for changing entry files
+
+	cd ./entry0$i
+		
+		for j in $(seq 1 20);do  # loop for changing top files
+		
+			cd ./Top$j
+			
+			../../createdataset 10 ./Top$.arff  #split 10 times
+
+			for k in $(seq 0 9);do #split starts from 0 
+
+		 		cat `find . ! -name '*$k' -name 'split*'` > split_train.csv
+				../../datasetmodify ./split_train.csv
+				
+				python ../../netclass.py $j>> "results$k" 2>&1
+				rm /tmp/net_model
+
+			done
+		
+			cd .. # back to directories of Top
+		done
+
+		cd .. # back to desktop 
+done
+exit 0
+#currently written the loops and created the train need to make sure the find function works and just run through how dataset modify works	

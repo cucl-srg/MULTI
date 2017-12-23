@@ -1,0 +1,51 @@
+#!/bin/bash
+#This scripts estimates the effective bandwidth of the flow based on the entropy.
+
+
+# npu_padding 0.001 | cant seem to find source code for npu_padding but works without it....
+
+
+#this is a to b.
+(for i in `cat filelist`; do
+#echo $i
+
+if [ `echo $i | cut -d'/' -f3` == `tcpdump -tt -vv  -nn -r $i  -F ./SiteA_src | grep -A 1 ^10 --no-group-separator |paste -s -d' \n' | awk '{print $18}' |  cut -d'.' -f1,2,3,4` ]; then
+
+#echo SiteA_src a-b
+./tcpsetether -o - $i | tcpdump -r - -w - -F ./SiteA_src|./tcpdumptimebyte - | perl -w -n -e 'chomp; @timelist=split; if(!defined($offset)) { $offset=$timelist[0]; print "0.0 $timelist[1]\n"; }else{ printf "%f $timelist[1]\n",($timelist[0] - $offset);} ' | sed 's/ .*$/ 1/'|dft/fft/f -m -o 32 | perl -w -n -e' chomp; @sortedlist=split; print "$list[0] $list[1]\n";'|sort -n -t' ' -k 2| perl -w -e'$i="1"; while(<>){chomp; @sortedlist=split; if($i <= 5){print "$sortedlist[0] $sortedlist[1] ";}  $i++; } while($i <= 5 ) { print "NA NA ";$i++;}; print "\n";';
+
+#perl -w -e'while(<>){chomp; split; print "$_[0] $_[1] "; } print "\n";'; 
+else
+
+#echo SiteA_notsrc a-b
+./tcpsetether -o - $i | tcpdump -r - -w - -F ./SiteA_notsrc|./tcpdumptimebyte - | perl -w -n -e 'chomp; @timelist=split; if(!defined($offset)) { $offset=$timelist[0]; print "0.0 $timelist[1]\n"; }else{ printf "%f $timelist[1]\n",($timelist[0] - $offset);} ' | sed 's/ .*$/ 1/'| dft/fft/f -m -o 32 | perl -w -n -e' chomp; @list=split; print "$list[0] $list[1]\n";'|sort -n -t' ' -k 2| perl -w -e'$i="1"; while(<>){chomp; @sortedlist=split; if($i <= 5){print "$sortedlist[0] $sortedlist[1] ";}  $i++; } while($i <= 5 ) { print "NA NA ";$i++;}; print "\n";';
+
+
+fi;
+done) 2>/dev/null  > fft_a-b
+
+
+#this is b to a.
+(for i in `cat filelist`; do
+
+if [ `echo $i | cut -d'/' -f4` == `tcpdump -tt -vv  -nn -r $i  -F ./SiteA_src | grep -A 1 ^10 --no-group-separator |paste -s -d' \n' | awk '{print $22}' |  cut -d'.' -f1,2,3,4` ]; then
+
+
+#echo SiteA_src b-a
+./tcpsetether -o - $i | tcpdump -r - -w - -F ./SiteA_src|./tcpdumptimebyte - | perl -w -n -e 'chomp; @timelist=split; if(!defined($offset)) { $offset=$timelist[0]; print "0.0 $timelist[1]\n"; }else{ printf "%f $timelist[1]\n",($timelist[0] - $offset);} ' | sed 's/ .*$/ 1/' | dft/fft/f -m -o 32 | perl -w -n -e' chomp; @list=split; print "$list[0] $list[1]\n";'|sort -n -t' ' -k 2 | perl -w -e'$i="1"; while(<>){chomp; @sortedlist=split; if($i <= 5){print "$sortedlist[0] $sortedlist[1] ";}  $i++; } while($i <= 5 ) { print "NA NA ";$i++;}; print "\n";';
+
+else
+
+#echo SiteA_notsrc b-a
+./tcpsetether -o - $i | tcpdump -r - -w - -F ./SiteA_notsrc|./tcpdumptimebyte - | perl -w -n -e 'chomp; @timelist=split; if(!defined($offset)) { $offset=$timelist[0]; print "0.0 $timelist[1]\n"; }else{ printf "%f $timelist[1]\n",($timelist[0] - $offset);} ' | sed 's/ .*$/ 1/' | dft/fft/f -m -o 32 | perl -w -n -e' chomp; @list=split; print "$list[0] $list[1]\n";'|sort -n -t' ' -k 2| perl -w -e'$i="1"; while(<>){chomp; @sortedlist=split; if($i <= 5){print "$sortedlist[0] $sortedlist[1] ";}  $i++; } while($i <= 5 ) { print "NA NA ";$i++;}; print "\n";';
+fi;
+done) 2>/dev/null > fft_b-a
+
+#
+
+#this takes into account all the traffic of the connection.
+(for i in `cat filelist`; do 
+./tcpsetether -o - $i | tcpdump -r - -w - |./tcpdumptimebyte -| perl -w -n -e 'chomp; @timelist=split; if(!defined($offset)) { $offset=$timelist[0]; print "0.0 $timelist[1]\n"; }else{ printf "%f $timelist[1]\n",($timelist[0] - $offset);} ' | sed 's/ .*$/ 1/' | dft/fft/f -m -o 32 | perl -w -n -e' chomp; @list1=split; print "$list1[0] $list1[1]\n";'|sort -n -t' ' -k 2| perl -w -e'$i="1"; while(<>){chomp; @sortedlist=split; if($i <= 5){print "$sortedlist[0] $sortedlist[1] ";}  $i++; } while($i <= 5 ) { print "NA NA ";$i++;}; print "\n";';
+done) 2>/dev/null > fft.all 
+
+

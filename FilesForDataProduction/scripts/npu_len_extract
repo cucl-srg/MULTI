@@ -1,0 +1,63 @@
+#!/usr/bin/perl -w
+
+
+# example formats
+#$ tcpdump -e -tt -nn -v -r ../A.dump.0162 -c 2
+#1061333838.092210 0:b:60:28:c5:0 75:9d:13:63:2e:c0 0800 590: 192.168.196.91.80 > 1.2.3.4.62635: . [tcp sum ok] 704671941:704672477(536) ack 2347959479 win 61440 (ttl 58, id 40406, len 576)
+#1061333838.092211 0:b:60:28:c5:0 aa:9d:13:63:2e:c0 0800 187: 192.168.196.91.80 > 2.3.4.5.62635: P [tcp sum ok] 536:669(133) ack 1 win 61440 (ttl 58, id 40407, len 173)
+
+
+
+#ignore comments above format for tcpdump is different 
+
+while(<>) {
+# first ones look for comment lines, last one limits this script to tcp
+# pkts only (icmp isusually folowed by a colon)
+    if ((! /^\#.*/))
+    {
+	chop;
+	$CL=$_;
+
+
+ 	
+	if( ( $CL =~ /icmp/) ) {
+	    m/^([\d\.][\d\.]*) [^ ][^ ]* > [^ ][^ ]* .*? length (\d*): .*? ttl (\d*).*? length (\d*).*? ([\d\.]*)\.\d* > ([\d\.]*)\.\d*: .*$/;
+	    $t=$1;
+            $elen=$2;
+	    $s=$3;
+	    $d=$4;
+	    $ttl=$5;
+	    $len=$6;
+	    $ty="icmp";
+	}elsif( ($CL =~ /TCP/ ) || ($CL =~ /win/ ) ) {
+	    m/^([\d\.][\d\.]*) [^ ][^ ]* > [^ ][^ ]* .*? length (\d*): .*? ttl (\d*).*? length (\d*).*? ([\d\.]*)\.\d* > ([\d\.]*)\.\d*: .*$/;
+	    $t=$1;
+            $elen=$2;
+	    $s=$5;
+	    $d=$6;
+	    $ttl=$3;
+	    $len=$4;
+	    $ty="tcp";
+	    
+	}elsif( $CL =~ /udp/) {
+	    m/^([\d\.][\d\.]*) [^ ][^ ]* > [^ ][^ ]* .*? length (\d*): .*? ttl (\d*).*? length (\d*).*? ([\d\.]*)\.\d* > ([\d\.]*)\.\d*: .*$/;
+	    $t=$1;
+            $elen=$2;
+	    $s=$5;
+	    $d=$6;
+	    $ttl=$3;
+	    $len=$4;
+	    $ty="udp";
+	    
+	}
+		
+	if ( ( $ty eq "tcp") ||( $ty eq "udp")) {
+#	    $s =~ s/\.\d+$//;
+#	    $d =~ s/\.\d+$//;
+	}
+	if ( ( $ty eq "tcp") ||( $ty eq "udp") ||( $ty eq "icmp")) {
+	}else{
+	    printf STDERR "Couldn't parse $CL\n";
+	}
+    }
+}

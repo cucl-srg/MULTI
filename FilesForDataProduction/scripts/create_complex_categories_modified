@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+#cat filelist  | perl -w -n -e'chomp; $ORIG=$_; @dir_path=split(/\//); $h1=$dir_path[2]; $h2=$dir_path[3]; $j=$dir_path[4]; split(/\-/,$j); $p2=$dir_path[2]; $p2 =~ s/.trace//; $p1=$dir_path[1];$t=$dir_path[1]; print "$h1 $p1 <-> $h2 $p2 - - # $t # $ORIG\n";' > filelist_flow_format
+
+##attempt 1
+cat filelist | perl -w -n -e'chomp; $ORIG=$_; @dir_path=split(/\//); $h1=$dir_path[2]; $h2=$dir_path[4]; $p2=$dir_path[5]; $p1=$dir_path[3];$t=$dir_path[6]; $t =~ s/.trace//; print "$h1 $p1 <-> $h2 $p2 - - # $t # $ORIG\n";' > filelist_flow_format
+
+
+cat filelist_flow_format | sed 's/^/ZZZZZZZZ /' > filelist_flow_format_Z-category
+
+#sort -t' ' filelist_flow_format_Z-category complex.classified | perl -w -e'$Z="";$C=""; while(<>) {chomp; $O=$_; if( $O =~ /^ZZZZ/ ) { $Z=$O; $Z =~ s/^Z+ //; print "$C $Z\n";} else { undef($Z); $C=$O;  $C =~ /^([^\s]+)\s.*$/; $C=$1;    }}' > complex_category
+
+##attempt 2
+
+
+# finding each entry in complex.classified
+
+
+## create classified cut easier to do comparison
+cut -d' ' -f2,3,5,6 complex.classified |tr ' ' ','  > complex.classified.cut
+
+while read i; do
+
+	if   grep ` echo $i | cut -d' ' -f2,3,5,6  | tr ' ' ',' | sed 's/,00*/,/'` complex.classified.cut ; then
+
+		line_num=$(grep -n ` echo $i cut -d' ' -f2,3,5,6 | tr ' ' ',' | sed 's/,00*/,/'` complex.classified.cut | cut -d':' -f1) # find line num of match
+
+	 	class=$(head -$line_num complex.classified | tail -1 | cut -d' ' -f1)  # get class
+
+		echo $i | sed 's/^Z+/$class/' >> filelist_flow_format_sorted # classify instance
+
+
+ 	elif   grep `echo $i |cut -d' ' -f2,3,5,6  | awk '{t = $1; b=$2; $1 = $3; $2 = $4; $3 = t; $4 = b; print;} '  | sed -r 's/ +/ /' | tr ' ' ',' | sed 's/,00*/,/'` complex.classified.cut ; then
+                # if client/server get swapped
+
+		line_num=$( grep -n ` echo $i |cut -d' ' -f2,3,5,6 | awk '{t = $1; b=$2; $1 = $3; $2 = $4; $3 = t; $4 = b; print;} '| sed -r 's/ +/ /' | tr ' ' ',' | sed 's/,00*/,/' ` complex.classified.cut | cut -d':' -f1)
+
+                class=$(head -$line_num complex.classified | tail -1 | cut -d' ' -f1)
+
+                 echo "class: $class"
+
+                echo $i | sed -r "s/^Z+/$class/" >> filelist_flow_format_sorted
+	fi > /dev/null
+
+done < filelist_flow_format_Z-category
+
+cat filelist_flow_format_sorted > complex_category
+rm complex.classified.cut filelist_flow_format_sorted

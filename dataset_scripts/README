@@ -1,0 +1,33 @@
+
+------------crossvalid------------
+link to zip version of Entry01-10 folder used with cross validation below
+
+http://www.cl.cam.ac.uk/~nsn23/ 
+
+Format when using crossvalidation
+
+ crossvalidation script in same directory as Entry01-10 folder, within each folder 20 folders
+ containing Top 1 to 20 each containing one arff file with corresponding number of attributes
+
+ for instance
+
+ Top 1 has 1 attribute
+ Top 12 has 12 attribues etc
+
+ crossvalidate + Entry01..10 → (subdirectory) Top 1.. 20 → (subdirectory) Top”i”.arff ( “i”
+ corresponds to respective parent directory name)
+
+
+------ createdatset------
+ arguments for createdataset:
+ first argument is number of files to split original arff file into
+ the remaining arguments are the file you want to split
+ output files are called split"i"
+
+--------datasetmodify-------
+puts arff files into format that can be used for tensorflow removing 2 classes voip and chat.
+
+--------convertclasses----------
+
+arguments are arff files with classes which are Bulk and need to be converted to ftp-control pasv
+and data

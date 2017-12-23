@@ -1,0 +1,18 @@
+attributes in tcptrace.char are slightly different than original specifically those related to RTT
+full sz characteristics of tcp trace. Also attributes pertaining to FFT are slightly off due to not
+being able to find code for npu_padding
+
+----------------code in script ./dft/sc2 -------------------
+
+what it is at the moment --->| sed 's/ .*$/ 1/'| dft/fft/f -m -o 32 | 
+what it should be -----> | sed 's/ .*$/ 1/'| npu_padding 0.001 | dft/fft/f -m -o 32 |
+
+
+-----------------------perl modules------------------------
+
+need to search in specific paths to find the necessary modules for the perl script to run, this can
+be done by copying and pasting the following line of code in to the terminal or just adding it to
+./.bashrc:
+
+
+export PERL5LIB=/path/to/scripts/perl:/path/to/scripts/perl/lib/
